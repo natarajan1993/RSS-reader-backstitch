@@ -1,0 +1,19 @@
+{% extends 'main/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container">
+    <h1>Update Feed {{feed.name}}</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            {{update_feed.name|as_crispy_field}}
+        </div>
+        <div class="form-group">
+            {{update_feed.url|as_crispy_field}}
+        </div>
+        <button type="submit" class="btn btn-primary">Update</button>
+        <a href="{%url 'feeds' %}" class="btn btn-secondary">Go Back</a>
+    </form>
+</div>
+{% endblock %}
