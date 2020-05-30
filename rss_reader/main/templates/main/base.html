@@ -23,9 +23,29 @@
             <li class="nav-item">
               <a class="nav-link" href="{% url 'home' %}">Home</a>
             </li>
+            {% if user.is_authenticated %}
             <li class="nav-item">
               <a class="nav-link" href="{% url 'feeds' %}">My Subscriptions</a>
             </li>
+            {%endif%}
+          </ul>
+          <ul class="navbar-nav">
+            {% if user.is_authenticated %}
+              <p class="navbar-text">
+                Hello {{user.username}}
+              </p>
+              <li class="nav-item">
+                <a href="{% url 'logout' %}" class="nav-link">Logout</a>
+              </li>
+            {% else %}
+              <li class="nav-item">
+                <a href="{% url 'login' %}" class="nav-link">Login</a>
+              </li>
+              <li class="nav-item">
+                <a href="{% url 'signup' %}" class="nav-link">Sign Up</a>
+              </li>
+            {% endif %}
+          </ul>
         </div>
       </nav> 
    {%block content%} 
