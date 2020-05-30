@@ -3,6 +3,7 @@
 {% block content %}
 <div class="container">
     <h1 class="text-center">Your Subscriptions</h1>
+    <a href="{% url 'add_feed' %}" class="btn btn-primary">Add new Feed</a>
     <div class="accordion" id="mainAccordion">
         {% for feed in feeds %}
             <div class="card">

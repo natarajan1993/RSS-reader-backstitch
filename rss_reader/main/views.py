@@ -15,26 +15,31 @@ def home(request):
 
 @login_required(redirect_field_name='home')
 def get_feeds(request):
-    queryset = Feed.objects.all()
+    queryset = Feed.objects.filter(owner=request.user)
     return render(request, 'main/feeds.html', {'feeds':queryset})
 
 @login_required(redirect_field_name='home')
 def add_feed(request):
-    upload = FeedCreateForm()
+    form = FeedCreateForm()
     if request.method == 'POST':
-        upload = FeedCreateForm(request.POST)
-        if upload.is_valid():
-            upload.save()
+        form = FeedCreateForm(request.POST)
+        if form.is_valid():
+            Feed.objects.create(
+                name=form.cleaned_data.get("name"),
+                url=form.cleaned_data.get("url"),
+                owner=request.user
+            )
             return redirect('feeds')
         else:
-            return HttpResponse("""your form is wrong, reload on <a href = "{{ url : 'feeds'}}">reload</a>""")
+            print(form.errors)
+            return HttpResponse("""your form is wrong, reload on <a href = "{{ url : 'add_feed'}}">reload</a>""")
     else:
-        return render(request, 'main/add_feed.html', {'add_feed':upload})
+        return render(request, 'main/add_feed.html', {'add_feed':form})
 
 @login_required(redirect_field_name='home')
 def update_feed(request, feed_id):
     try:
-        feed = Feed.objects.get(id = int(feed_id))
+        feed = Feed.objects.get(id = int(feed_id),owner=request.user)
     except Feed.DoesNotExist:
         return redirect('feeds')
     feed_form = FeedCreateForm(request.POST or None,instance=feed)
@@ -46,7 +51,7 @@ def update_feed(request, feed_id):
 @login_required(redirect_field_name='home')
 def delete_feed(request, feed_id):
     try:
-        feed = Feed.objects.get(id = int(feed_id))
+        feed = Feed.objects.get(id = int(feed_id), owner=request.user)
     except Feed.DoesNotExist:
         return redirect('feeds')
     

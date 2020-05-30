@@ -5,4 +5,4 @@ from .models import Feed
 class FeedCreateForm(forms.ModelForm):
     class Meta:
         model = Feed
-        fields = '__all__'
+        fields = ['name','url']
