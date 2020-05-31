@@ -3,5 +3,20 @@
 {% block content %}
 <div class="container">
     <h1>Home</h1>
+    <form action="{% url 'home' %}" method="get">
+        <input type="submit" class="btn btn-primary" value="Get new posts" name="new_posts">
+    </form>
+    {% for post in posts %}
+        <div class="card mb-3">
+            {% if post.image_url %}
+                <img src={{post.image_url}} class="card-img" width="150" height="150">
+            {% endif %}
+            <div class="card-body">
+                <h5 class="card-title"><a href="{{post.link}}">{{post.title}}</a></h5>
+                <p class="card-text">{{post.body}}</p>
+            </div>
+        </div>
+        <br/>
+    {% endfor %}
 </div>
 {% endblock content %}

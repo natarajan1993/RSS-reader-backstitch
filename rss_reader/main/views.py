@@ -5,17 +5,24 @@ from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
 
 from rest_framework import generics
+from feeds import models as feeds_models
+from feeds import utils as feeds_utils
 
 from .models import *
 from .serializers import *
 from .forms import *
 
+import datetime
+
 def home(request):
-    return render(request,'main/home.html')
+    if request.GET.get("new_posts"):
+        feeds_utils.update_feeds()
+    posts = feeds_models.Post.objects.filter(source__owner = request.user)
+    return render(request,'main/home.html',{"posts":posts})
 
 @login_required(redirect_field_name='home')
 def get_feeds(request):
-    queryset = Feed.objects.filter(owner=request.user)
+    queryset = feeds_models.Source.objects.filter(owner=request.user)
     return render(request, 'main/feeds.html', {'feeds':queryset})
 
 @login_required(redirect_field_name='home')
@@ -24,10 +31,11 @@ def add_feed(request):
     if request.method == 'POST':
         form = FeedCreateForm(request.POST)
         if form.is_valid():
-            Feed.objects.create(
+            feeds_models.Source.objects.create(
                 name=form.cleaned_data.get("name"),
-                url=form.cleaned_data.get("url"),
-                owner=request.user
+                feed_url=form.cleaned_data.get("url"),
+                owner=request.user,
+                due_poll=datetime.datetime.now()
             )
             return redirect('feeds')
         else:
