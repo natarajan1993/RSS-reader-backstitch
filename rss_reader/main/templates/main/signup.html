@@ -1,0 +1,39 @@
+{% extends 'main/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="container">
+        <h1>Create new Account</h1>
+        {% if form.errors %}
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <div class="alert alert-danger" id="field-errors">
+                        <strong>{{ error|escape }}</strong>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <div class="alert alert-danger" id="non-field-errors">
+                    <strong>{{ error|escape }}</strong>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        <form action="{% url 'signup' %}" method="post">
+            {% csrf_token %}
+            {{form.username|as_crispy_field}} 
+            {{form.password1|as_crispy_field}} 
+            {{form.password2|as_crispy_field}}
+            <div class="container text-center">
+                <button type="submit" class="btn btn-primary">Sign Up</button>
+                <a href="{% url 'login' %}" class="btn btn-secondary">Login</a>
+            </div> 
+        </form>
+    </div>
+
+{% endblock content %}
