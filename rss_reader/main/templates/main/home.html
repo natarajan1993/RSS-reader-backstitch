@@ -1,22 +1,79 @@
 {% extends 'main/base.html' %}
+{% load crispy_forms_tags %}
 
 {% block content %}
 <div class="container">
-    <h1>Home</h1>
+    <h1 class="text-center">Home</h1>
     <form action="{% url 'home' %}" method="get">
         <input type="submit" class="btn btn-primary" value="Get new posts" name="new_posts">
+        <small>Last Checked: {{last_checked}}</small>
     </form>
-    {% for post in posts %}
+    <br>
+    {% if filter.form.errors %}
+        {% for field in filter.form %}
+            {% for error in field.errors %}
+                <div class="alert alert-danger" id="field-errors">
+                    <strong>{{ error|escape }}</strong>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endfor %}
+        {% for error in filter.form.non_field_errors %}
+            <div class="alert alert-danger" id="non-field-errors">
+                <strong>{{ error|escape }}</strong>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    <div class="accordion" id="filterAccordion">
+        <div class="card">
+            <div class="card-header" id="filter-header">
+                <h2 class="mb-0">
+                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#filter-collapse" aria-expanded="true" aria-controls="filter-collapse">Filters</button>
+                </h2>
+            </div>
+            <div id="filter-collapse" class="collapse" aria-labelledby="filter-header" data-parent="#filterAccordion">
+                <div class="card-body">         
+                    <form action="" method="get">
+                        {{filter.form.source__name__icontains|as_crispy_field}}
+                        {{filter.form.title__icontains|as_crispy_field}}
+                        Date Range: {{filter.form.created}}
+                        <br>
+                        <input type="submit" class="btn btn-primary" style="margin: 10px;"/>
+                        <input type="submit" class="btn btn-secondary" onclick="clearFilters()" value="Clear Filters"/>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br>
+    {% for post in filter.qs %}
         <div class="card mb-3">
             {% if post.image_url %}
                 <img src={{post.image_url}} class="card-img" width="150" height="150">
             {% endif %}
             <div class="card-body">
                 <h5 class="card-title"><a href="{{post.link}}">{{post.title}}</a></h5>
+                <p class="card-text"><small><b>Source: </b>{{post.source.name}}</small></p>
                 <p class="card-text">{{post.body}}</p>
+                <p class="card-text"><i>Created on: {{post.created | date:"m/d/Y H:m"}}</i></p>
             </div>
         </div>
         <br/>
     {% endfor %}
 </div>
+<script>
+    clearFilters = () => {
+        document.getElementById("id_source__name__icontains").value = ''
+        document.getElementById("id_title__icontains").value = ''
+        document.getElementById("id_created_0").value = ''
+        document.getElementById("id_created_1").value = ''
+        document.getElementById("id_created_0").parentElement.className += "form-group"
+        document.getElementById("id_created_0").className += "form-control"
+    }
+</script>
 {% endblock content %}

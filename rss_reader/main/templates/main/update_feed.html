@@ -10,7 +10,7 @@
             {{update_feed.name|as_crispy_field}}
         </div>
         <div class="form-group">
-            {{update_feed.url|as_crispy_field}}
+            {{update_feed.feed_url|as_crispy_field}}
         </div>
         <button type="submit" class="btn btn-primary">Update</button>
         <a href="{%url 'feeds' %}" class="btn btn-secondary">Go Back</a>

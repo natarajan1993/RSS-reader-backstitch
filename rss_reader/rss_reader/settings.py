@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'crispy_forms',
     'feeds',
+    'django_filters',
 
     'main'
 ]
@@ -136,3 +137,6 @@ STATIC_URL = '/static/'
 
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'login'
+
+FEEDS_USER_AGENT = "SimpleDjangoRSSReader/1.0"
+FEEDS_SERVER = "http://localhost:8000"

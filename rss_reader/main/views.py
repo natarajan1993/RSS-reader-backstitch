@@ -8,32 +8,36 @@ from rest_framework import generics
 from feeds import models as feeds_models
 from feeds import utils as feeds_utils
 
-from .models import *
-from .serializers import *
 from .forms import *
+from .filters import *
 
 import datetime
 
+@login_required(redirect_field_name='login')
 def home(request):
+    feeds_utils.update_feeds()
+    last_checked = datetime.datetime.now()
     if request.GET.get("new_posts"):
         feeds_utils.update_feeds()
-    posts = feeds_models.Post.objects.filter(source__owner = request.user)
-    return render(request,'main/home.html',{"posts":posts})
+        last_checked = datetime.datetime.now()
+    posts = feeds_models.Post.objects.filter(source__owner = request.user).order_by('-created')
+    f = PostFilter(request.GET or None, queryset=posts)
+    return render(request,'main/home.html',{"posts":posts,"filter":f, "last_checked":last_checked})
 
-@login_required(redirect_field_name='home')
+@login_required(redirect_field_name='login')
 def get_feeds(request):
     queryset = feeds_models.Source.objects.filter(owner=request.user)
     return render(request, 'main/feeds.html', {'feeds':queryset})
 
-@login_required(redirect_field_name='home')
+@login_required(redirect_field_name='login')
 def add_feed(request):
-    form = FeedCreateForm()
+    form = SourceCreateForm()
     if request.method == 'POST':
-        form = FeedCreateForm(request.POST)
+        form = SourceCreateForm(request.POST)
         if form.is_valid():
             feeds_models.Source.objects.create(
                 name=form.cleaned_data.get("name"),
-                feed_url=form.cleaned_data.get("url"),
+                feed_url=form.cleaned_data.get("feed_url"),
                 owner=request.user,
                 due_poll=datetime.datetime.now()
             )
@@ -44,23 +48,23 @@ def add_feed(request):
     else:
         return render(request, 'main/add_feed.html', {'add_feed':form})
 
-@login_required(redirect_field_name='home')
+@login_required(redirect_field_name='login')
 def update_feed(request, feed_id):
     try:
-        feed = Feed.objects.get(id = int(feed_id),owner=request.user)
-    except Feed.DoesNotExist:
+        feed = feeds_models.Source.objects.get(id = int(feed_id),owner=request.user)
+    except feeds_models.Source.DoesNotExist:
         return redirect('feeds')
-    feed_form = FeedCreateForm(request.POST or None,instance=feed)
+    feed_form = SourceCreateForm(request.POST or None,instance=feed)
     if feed_form.is_valid():
        feed_form.save()
        return redirect('feeds')
     return render(request, 'main/update_feed.html', {'update_feed':feed_form, 'feed':feed})
 
-@login_required(redirect_field_name='home')
+@login_required(redirect_field_name='login')
 def delete_feed(request, feed_id):
     try:
-        feed = Feed.objects.get(id = int(feed_id), owner=request.user)
-    except Feed.DoesNotExist:
+        feed = feeds_models.Source.objects.get(id = int(feed_id), owner=request.user)
+    except feeds_models.Source.DoesNotExist:
         return redirect('feeds')
     
     feed.delete()
