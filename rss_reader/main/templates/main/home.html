@@ -1,5 +1,6 @@
 {% extends 'main/base.html' %}
 {% load crispy_forms_tags %}
+{% load static %}
 
 {% block content %}
 <div class="container">
@@ -54,7 +55,7 @@
     {% for post in filter.qs %}
         <div class="card mb-3">
             {% if post.image_url %}
-                <img src={{post.image_url}} class="card-img" width="150" height="150">
+                <img src={{post.image_url}} class="card-img mx-auto" style='height: 30%; width: 30%; object-fit: contain'>
             {% endif %}
             <div class="card-body">
                 <h5 class="card-title"><a href="{{post.link}}">{{post.title}}</a></h5>
