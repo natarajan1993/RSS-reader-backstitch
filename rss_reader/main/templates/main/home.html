@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="container">
-    <h1 class="text-center">Home</h1>
+    <h1 class="text-center">My Feed</h1>
     <form action="{% url 'home' %}" method="get">
         <input type="submit" class="btn btn-primary" value="Get new posts" name="new_posts">
         <small>Last Checked: {{last_checked}}</small>
@@ -52,7 +52,7 @@
         </div>
     </div>
     <br>
-    {% for post in filter.qs %}
+    {% for post in posts %}
         <div class="card mb-3">
             {% if post.image_url %}
                 <img src={{post.image_url}} class="card-img mx-auto" style='height: 30%; width: 30%; object-fit: contain'>
@@ -66,6 +66,62 @@
         </div>
         <br/>
     {% endfor %}
+    {% if posts.has_other_pages %}
+        <ul class="pagination">
+            {% if posts.has_previous %}
+                {% if '&' in request.get_full_path %}
+                    <li class="page-item">
+                        <a class="page-link" id="page-prev" href="{{request.get_full_path}}&page={{previous_page_number}}">Previous</a>
+                    </li>
+                {% else %}
+                    <li class="page-item">
+                        <a class="page-link" id="page-prev" href="?page={{previous_page_number}}">Previous</a>
+                    </li>
+                {% endif %}
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link disabled">Previous</span>
+                </li>
+            {% endif %}
+            {% for i in posts.paginator.page_range %}
+                {% if posts.number == i %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ i }} <span class="sr-only">(current)</span></span></li>
+                {% else %}
+                    {% if '&' in request.get_full_path %}
+                        <li class="page-item">
+                            <a id="page-num" class="page-link" href="{{request.get_full_path}}&page={{i}}">
+                                {{ i }}
+                            </a>
+                        </li>
+                    {% else %}
+                       <li class="page-item">
+                            <a id="page-num" class="page-link" href="?page={{i}}">
+                                {{ i }}
+                            </a>
+                        </li> 
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+            {% if posts.has_next %}
+                {% if '&' in request.get_full_path %}
+                    <li class="page-item">
+                        <a id="page-next" class="page-link" href="{{request.get_full_path}}&page={{posts.next_page_number}}">Next</a>
+                    </li>
+                {% else %}
+                   <li class="page-item">
+                        <a id="page-num" class="page-link" href="?page={{posts.next_page_number}}">
+                            Next
+                        </a>
+                    </li> 
+                {% endif %}
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Next</span>
+                </li>
+            {% endif %}
+        </ul>
+    {% endif %}
 </div>
 <script>
     clearFilters = () => {

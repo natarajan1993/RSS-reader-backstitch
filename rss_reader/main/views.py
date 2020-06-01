@@ -3,6 +3,8 @@ from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.views.generic import ListView
 
 from rest_framework import generics
 from feeds import models as feeds_models
@@ -16,12 +18,19 @@ import datetime
 @login_required(redirect_field_name='login')
 def home(request):
     feeds_utils.update_feeds()
-    last_checked = datetime.datetime.now()
     if request.GET.get("new_posts"):
         feeds_utils.update_feeds()
-        last_checked = datetime.datetime.now()
-    posts = feeds_models.Post.objects.filter(source__owner = request.user).order_by('-created')
-    f = PostFilter(request.GET or None, queryset=posts)
+    last_checked = datetime.datetime.now()
+    post_list = feeds_models.Post.objects.filter(source__owner = request.user).order_by('-created')
+    page = request.GET.get('page',1)
+    f = PostFilter(request.GET or None, queryset=post_list)
+    paginator = Paginator(f.qs,20)
+    try:
+        posts = paginator.page(page)
+    except PageNotAnInteger:
+        posts = paginator.page(1)
+    except EmptyPage:
+        posts = paginator.page(paginator.num_pages)
     return render(request,'main/home.html',{"posts":posts,"filter":f, "last_checked":last_checked})
 
 @login_required(redirect_field_name='login')
