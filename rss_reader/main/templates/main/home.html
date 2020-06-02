@@ -6,7 +6,7 @@
 <div class="container">
     <h1 class="text-center">My Feed</h1>
     <form action="{% url 'home' %}" method="get">
-        <input type="submit" class="btn btn-primary" value="Get new posts" name="new_posts">
+        <input type="submit" class="btn btn-primary" value="Get new posts" name="new_posts"> 
         <small>Last Checked: {{last_checked}}</small>
     </form>
     <br>
@@ -40,11 +40,14 @@
             <div id="filter-collapse" class="collapse" aria-labelledby="filter-header" data-parent="#filterAccordion">
                 <div class="card-body">         
                     <form action="" method="get">
-                        {{filter.form.source__name__icontains|as_crispy_field}}
-                        {{filter.form.title__icontains|as_crispy_field}}
-                        Date Range: {{filter.form.created}}
+                        <h5 class="text-center">Filter Posts <span class="mdi mdi-filter-menu"></span></h5>
+                        <div class="container border p-3">
+                            {{filter.form.source__name__icontains|as_crispy_field}}
+                            {{filter.form.title__icontains|as_crispy_field}}
+                            Date Range: {{filter.form.created}}
+                        </div>
                         <br>
-                        <h5 class="text-center">Sort Posts</h5>
+                        <h5 class="text-center">Sort Posts <span class="mdi mdi-sort-ascending"></span></h5>
                         <div class="container border" style="padding: 10px;">
                            {{filter.form.sort}}
                         </div>
