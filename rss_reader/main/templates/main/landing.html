@@ -1,0 +1,57 @@
+{% extends 'main/base.html' %}
+
+{% block content %}
+{% load static %}
+<div class="jumbotron">
+    <div class="container">
+        <h1 class="display-3">RSS Reader</h1>
+        <p>A RSS feed reader and manager built using Python</p>
+        <p><a class="btn btn-primary btn-lg" href="{% url 'signup' %}" role="button">Create Account &raquo;</a></p>
+        <p><a href="https://github.com/natarajan1993/RSS-reader-backstitch" class="btn btn-large btn-outline-dark"><span class="mdi mdi-github"></span> Github</a></p>
+    </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <img class="img-fluid" src="{% static 'img/python-logo.png' %}" alt="Python logo"  width="140" height="140">
+                <h2>Python</h2>
+                <p class="mb-4">Python is the language used for the server-side code</p>
+                <p><a class="btn btn-secondary align-items-end" href="https://www.python.org" role="button">View details &raquo;</a></p>
+            </div>
+            <div class="col-md-4">
+                <img class="img-fluid" src="{% static 'img/django-logo.png' %}" alt="Django logo"  width="140" height="140">
+                <h2>Django Web Framework</h2>
+                <p>Django is the MVC framework built using Python that provides all the web functionality used for the site. Django's template engine controls the view while it's routing module provides the controller part of the framework</p>
+                <p><a class="btn btn-secondary" href="https://www.djangoproject.com" role="button">View details &raquo;</a></p>
+            </div>
+            <div class="col-md-4">
+                <img class="img-fluid" src="{% static 'img/sqlite-logo.png' %}" alt="SQLite logo">
+                <h2>SQLite</h2>
+                <p>SQLite is the backend database used in development</p>
+                <p><a class="btn btn-secondary" href="https://www.sqlite.org" role="button">View details &raquo;</a></p>
+            </div>
+        </div>
+        <div class="row justify-content-center mt-3">
+            <div class="col-md-4">
+                <img class="img-fluid" src="{% static 'img/Bootstrap_logo.png' %}" alt="Bootstrap logo"  width="140" height="140">
+                <h2>Bootstrap</h2>
+                <p>Bootstrap is the front-end framework</p>
+                <p><a class="btn btn-secondary" href="https://www.getbootstrap.com" role="button">View details &raquo;</a></p>
+            </div>
+        </div>
+    <hr>    
+</div>
+
+
+<footer class="container">
+    <p>&copy; Nate Mahalingam 2020</p>
+</footer>
+<!-- 
+<style>
+    .sqlite{
+        height: 50%;
+        width: 50%;
+    }
+</style> -->
+{% endblock content %}

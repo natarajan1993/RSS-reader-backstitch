@@ -15,11 +15,15 @@ from .filters import *
 
 import datetime
 
+def landing(request):
+    return render(request, 'main/landing.html')
+
 @login_required(redirect_field_name='login')
 def home(request):
     # feeds_utils.update_feeds()
+    sources = feeds_models.Source.objects.filter(owner=request.user)
     if request.GET.get("new_posts"):
-        feeds_utils.update_feeds()
+        feeds_utils.update_feeds(len(sources))
     last_checked = datetime.datetime.now()
     
     post_list = feeds_models.Post.objects.filter(source__owner = request.user).order_by('-created')

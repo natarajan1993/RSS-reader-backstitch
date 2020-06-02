@@ -146,19 +146,7 @@ class Post(models.Model):
             ret = ""        
 
     def __str__(self):
-        return "%s: post %d, %s" % (self.source.display_name, self.index, self.title)
-        
-    @property
-    def recast_link(self):
-    
-        # TODO: This needs to come out, it's just for recast
-    
-        #if "?" in self.link:
-        #    return self.link + ("&recast_id=%d" % self.id)
-        #else:
-        #    return self.link + ("?recast_id=%d" % self.id)current_subscription
-        
-        return "/post/%d/" % self.id
+        return f"{self.title}|{self.source.name}"
 
     class Meta:
         ordering = ["index"]
@@ -169,18 +157,6 @@ class Enclosure(models.Model):
     length = models.IntegerField(default=0)
     href   = models.CharField(max_length=512)
     type   = models.CharField(max_length=256) 
-    
-    @property
-    def recast_link(self):
-    
-        # TODO: This needs to come out, it's just for recast
-
-        #if "?" in self.href:
-        #    return self.href + ("&recast_id=%d" % self.id)
-        #else:
-        #    return self.href + ("?recast_id=%d" % self.id)
-
-        return "/enclosure/%d/" % self.id
         
         
 class WebProxy(models.Model):

@@ -5,6 +5,7 @@ from . import views
 
 urlpatterns = [
     path('', views.home,name='home'),
+    path('landing/',views.landing, name='landing'),
 
     path('feeds/', views.get_feeds, name='feeds'),
     path('add_feed/', views.add_feed, name='add_feed'),

@@ -1,4 +1,6 @@
+# Full credit to django-feed-reader https://github.com/xurble/django-feed-reader
 from django.db.models import Q
+
 from django.utils import timezone
 
 from .models import Source, Enclosure, Post, WebProxy
@@ -25,8 +27,8 @@ import logging
 
 class NullOutput(object):
     # little class for when we have no outputter    
-    def write(self, str):
-        pass
+    def write(self, string):
+        print(string)
 
 
 def _customize_sanitizer(fp):
@@ -77,10 +79,6 @@ def random_user_agent():
 
 
 def fix_relative(html, url):
-
-    """ this is fucking cheesy """
-    
-    
     try:
         base = "/".join(url.split("/")[:3])
 
@@ -113,7 +111,7 @@ def update_feeds(max_feeds=3, output=NullOutput()):
     for src in sources:
         read_feed(src, output)
         
-    # kill shit proxies
+    # kill bad proxies
     
     WebProxy.objects.filter(address='X').delete()
     
@@ -136,7 +134,7 @@ def read_feed(source_feed, output=NullOutput()):
 
     proxies = {}
     proxy = None
-    if source_feed.is_cloudflare : # Fuck you !
+    if source_feed.is_cloudflare :
         try:
             proxy = get_proxy(output)
             
@@ -180,7 +178,7 @@ def read_feed(source_feed, output=NullOutput()):
 
 
         
-    if ret is None and source_feed.status_code == 1:   # er ??
+    if ret is None and source_feed.status_code == 1:
         pass
     elif ret == None or source_feed.status_code == 0:
         source_feed.interval += 120
@@ -247,7 +245,7 @@ def read_feed(source_feed, output=NullOutput()):
                 source_feed.last_result = "Moved"
             else:
                 source_feed.last_result = "Feed has moved but no location provided"
-        except exception as Ex:
+        except Exception as Ex:
             output.write("\nError redirecting.")
             source_feed.last_result = "Error redirecting feed to " + new_url  
             pass
