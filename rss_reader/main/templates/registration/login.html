@@ -18,11 +18,15 @@
                 </div>
             {% endfor %}
         {% endif %}
-        <form action="{% url 'login' %}" method="post">
-            {% csrf_token %}
-            {{form.username|as_crispy_field}} 
-            {{form.password|as_crispy_field}} 
-            <button type="submit" class="btn btn-primary">Login</button>
-        </form>
+            <form action="{% url 'login' %}" method="post">
+                {% csrf_token %}
+                {{form.username|as_crispy_field}} 
+                {{form.password|as_crispy_field}} 
+                <div class="container text-center">
+                    <button type="submit" class="btn btn-primary">Login</button>
+                    <a href="{% url 'signup' %}" class="btn btn-secondary">Sign Up</a>
+                </div>
+            </form>
+        </div>
     </div>
 {% endblock content %}
