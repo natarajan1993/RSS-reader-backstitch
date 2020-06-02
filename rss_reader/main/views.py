@@ -17,12 +17,14 @@ import datetime
 
 @login_required(redirect_field_name='login')
 def home(request):
-    feeds_utils.update_feeds()
+    # feeds_utils.update_feeds()
     if request.GET.get("new_posts"):
         feeds_utils.update_feeds()
     last_checked = datetime.datetime.now()
+    
     post_list = feeds_models.Post.objects.filter(source__owner = request.user).order_by('-created')
     page = request.GET.get('page',1)
+   
     f = PostFilter(request.GET or None, queryset=post_list)
     paginator = Paginator(f.qs,20)
     try:

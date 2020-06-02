@@ -34,7 +34,7 @@
         <div class="card">
             <div class="card-header" id="filter-header">
                 <h2 class="mb-0">
-                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#filter-collapse" aria-expanded="true" aria-controls="filter-collapse">Filters</button>
+                    <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#filter-collapse" aria-expanded="true" aria-controls="filter-collapse">Filters & Sorting</button>
                 </h2>
             </div>
             <div id="filter-collapse" class="collapse" aria-labelledby="filter-header" data-parent="#filterAccordion">
@@ -44,6 +44,11 @@
                         {{filter.form.title__icontains|as_crispy_field}}
                         Date Range: {{filter.form.created}}
                         <br>
+                        <h5 class="text-center">Sort Posts</h5>
+                        <div class="container border">
+                           {{filter.form.sort}}
+                        </div>
+                        <br>
                         <input type="submit" class="btn btn-primary" style="margin: 10px;"/>
                         <input type="submit" class="btn btn-secondary" onclick="clearFilters()" value="Clear Filters"/>
                     </form>
@@ -51,6 +56,7 @@
             </div>
         </div>
     </div>
+    <br>
     <br>
     {% for post in posts %}
         <div class="card mb-3">
@@ -106,11 +112,11 @@
             {% if posts.has_next %}
                 {% if '&' in request.get_full_path %}
                     <li class="page-item">
-                        <a id="page-next" class="page-link" href="{{request.get_full_path}}&page={{posts.next_page_number}}">Next</a>
+                        <a id="page-next" class="page-link" href="{{request.get_full_path}}&page={{posts.next_page_number}}&sort={{sort}}&{{filter.get_context_data}}">Next</a>
                     </li>
                 {% else %}
                    <li class="page-item">
-                        <a id="page-num" class="page-link" href="?page={{posts.next_page_number}}">
+                        <a id="page-num" class="page-link" href="?page={{posts.next_page_number}}&sort={{sort}}&{{filter.get_context_data}}">
                             Next
                         </a>
                     </li> 
@@ -128,9 +134,7 @@
         document.getElementById("id_source__name__icontains").value = ''
         document.getElementById("id_title__icontains").value = ''
         document.getElementById("id_created_0").value = ''
-        document.getElementById("id_created_1").value = ''
-        document.getElementById("id_created_0").parentElement.className += "form-group"
-        document.getElementById("id_created_0").className += "form-control"
     }
+        //document.getElementById("date_range").innerHTML = 'Date Range'
 </script>
 {% endblock content %}
