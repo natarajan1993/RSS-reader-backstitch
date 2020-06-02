@@ -7,8 +7,8 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.generic import ListView
 
 from rest_framework import generics
-from feeds import models as feeds_models
-from feeds import utils as feeds_utils
+from . import models as feeds_models
+from . import utils as feeds_utils
 
 from .forms import *
 from .filters import *

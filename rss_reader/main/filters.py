@@ -1,6 +1,6 @@
 import django_filters as filters
 from django_filters.widgets import RangeWidget, LinkWidget
-from feeds.models import Post
+from .models import Post
 from django import forms
 
 class PostFilter(filters.FilterSet):

@@ -1,6 +1,6 @@
 from django import forms
 
-from feeds.models import Source
+from .models import Source
 
 class SourceCreateForm(forms.ModelForm):
     class Meta:

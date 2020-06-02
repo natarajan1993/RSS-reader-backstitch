@@ -114,11 +114,11 @@
             {% if posts.has_next %}
                 {% if '&' in request.get_full_path %}
                     <li class="page-item">
-                        <a id="page-next" class="page-link" href="{{request.get_full_path}}&page={{posts.next_page_number}}&sort={{sort}}&{{filter.get_context_data}}">Next</a>
+                        <a id="page-next" class="page-link" href="{{request.get_full_path}}&page={{posts.next_page_number}}">Next</a>
                     </li>
                 {% else %}
                    <li class="page-item">
-                        <a id="page-num" class="page-link" href="?page={{posts.next_page_number}}&sort={{sort}}&{{filter.get_context_data}}">
+                        <a id="page-num" class="page-link" href="?page={{posts.next_page_number}}">
                             Next
                         </a>
                     </li> 
