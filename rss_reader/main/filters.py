@@ -5,7 +5,9 @@ from django import forms
 
 class PostFilter(filters.FilterSet):
     created = filters.DateFromToRangeFilter(field_name='created',
-                                            widget=RangeWidget(attrs={'class':"form-control",'placeholder': 'mm/dd/yyyy'}))
+                                            widget=RangeWidget(attrs={'class':"form-control",
+                                                                      'placeholder': 'mm/dd/yyyy',
+                                                                      'type':'date'}))
     sort = filters.OrderingFilter(fields=(
                                             ("created","created"),
                                             ("title","title"),
