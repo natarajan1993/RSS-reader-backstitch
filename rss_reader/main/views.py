@@ -27,11 +27,12 @@ def login_excluded(redirect_to):
     return _method_wrapper
 
 def landing(request):
+    """Default landing page if user is not logged in"""
     return render(request, 'main/landing.html')
 
 @login_required(redirect_field_name='login')
 def home(request):
-    # feeds_utils.update_feeds()
+    """Home page with all the user's feeds"""
     sources = feeds_models.Source.objects.filter(owner=request.user)
     if request.GET.get("new_posts"):
         feeds_utils.update_feeds(len(sources))
@@ -52,11 +53,14 @@ def home(request):
 
 @login_required(redirect_field_name='login')
 def get_feeds(request):
+    """List view for the user's sources"""
+
     queryset = feeds_models.Source.objects.filter(owner=request.user)
     return render(request, 'main/feeds.html', {'feeds':queryset})
 
 @login_required(redirect_field_name='login')
 def add_feed(request):
+    """Create view for the user's feeds"""
     form = SourceCreateForm()
     if request.method == 'POST':
         form = SourceCreateForm(request.POST)
@@ -76,6 +80,7 @@ def add_feed(request):
 
 @login_required(redirect_field_name='login')
 def update_feed(request, feed_id):
+    """Update view for the user's sources"""
     try:
         feed = feeds_models.Source.objects.get(id = int(feed_id),owner=request.user)
     except feeds_models.Source.DoesNotExist:
@@ -88,6 +93,7 @@ def update_feed(request, feed_id):
 
 @login_required(redirect_field_name='login')
 def delete_feed(request, feed_id):
+    """Delete view for the user's sources"""
     try:
         feed = feeds_models.Source.objects.get(id = int(feed_id), owner=request.user)
     except feeds_models.Source.DoesNotExist:
@@ -98,6 +104,7 @@ def delete_feed(request, feed_id):
 
 @login_excluded('home')
 def signup_view(request):
+    """Signup view"""
     form = UserCreationForm(request.POST or None)
     if form.is_valid():
         form.save()

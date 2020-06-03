@@ -79,11 +79,11 @@
             {% if posts.has_previous %}
                 {% if '&' in request.get_full_path %}
                     <li class="page-item">
-                        <a class="page-link" id="page-prev" href="{{request.get_full_path}}&page={{previous_page_number}}">Previous</a>
+                        <a class="page-link" id="page-prev" href="{{request.get_full_path}}&page={{posts.previous_page_number}}">Previous</a>
                     </li>
                 {% else %}
                     <li class="page-item">
-                        <a class="page-link" id="page-prev" href="?page={{previous_page_number}}">Previous</a>
+                        <a class="page-link" id="page-prev" href="?page={{posts.previous_page_number}}">Previous</a>
                     </li>
                 {% endif %}
             {% else %}

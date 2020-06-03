@@ -23,8 +23,8 @@ class PostFilter(filters.FilterSet):
                                             ('-created',"Latest"),
                                             ('title',"By Title (A-Z)"),
                                             ('-title',"By Title (Z-A)"),
-                                            ('description',"By Description (A-Z)"),
-                                            ('-description',"By Description (Z-A)"),
+                                            ('body',"By Description (A-Z)"),
+                                            ('-body',"By Description (Z-A)"),
                                         ],
                                         widget=forms.RadioSelect)
     class Meta:
