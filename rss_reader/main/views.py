@@ -7,7 +7,6 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.generic import ListView
 from django.urls import reverse
 
-from rest_framework import generics
 from . import models as feeds_models
 from . import utils as feeds_utils
 
