@@ -36,7 +36,9 @@ def home(request):
     sources = feeds_models.Source.objects.filter(owner=request.user)
     if request.GET.get("new_posts"):
         feeds_utils.update_feeds(len(sources))
-    last_checked = datetime.datetime.now()
+        last_checked = feeds_models.LastChecked(checked_time=datetime.datetime.now(), owner=request.user)
+        last_checked.save()
+    last_checked = feeds_models.LastChecked.objects.last()
     
     post_list = feeds_models.Post.objects.filter(source__owner = request.user).order_by('-created')
     page = request.GET.get('page',1)

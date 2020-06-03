@@ -2,6 +2,8 @@
 from django.db import models
 from django.utils.timezone import utc
 from django.contrib.auth.models import User
+from django.template.defaultfilters import date as _date
+from django.template.defaultfilters import time as _time
 
 import time
 import datetime
@@ -10,7 +12,6 @@ import logging
 import sys
 import email
 from bs4 import BeautifulSoup
-
 
 class Source(models.Model):
     # This is an actual feed that we poll
@@ -167,3 +168,11 @@ class WebProxy(models.Model):
     
     def __str__(self):
         return "Proxy:{}".format(self.address)
+
+
+class LastChecked(models.Model):
+    checked_time = models.DateTimeField(auto_now=False, auto_now_add=False, blank=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    # def __str__(self):
+    #     return str(self.checked_time) # Wed Jun 3 2020, 8:30 am

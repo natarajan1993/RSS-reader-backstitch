@@ -1,13 +1,14 @@
 {% extends 'main/base.html' %}
 {% load crispy_forms_tags %}
 {% load static %}
+{% load tz %}
 
 {% block content %}
 <div class="container">
     <h1 class="text-center">My Feed</h1>
     <form action="{% url 'home' %}" method="get">
         <input type="submit" class="btn btn-primary" value="Get new posts" name="new_posts"> 
-        <small>Last Checked: {{last_checked}}</small>
+        <small>Last Checked: {{last_checked.checked_time}}</small>
     </form>
     <br>
     {% if filter.form.errors %}
