@@ -1,10 +1,11 @@
 from django.shortcuts import render,redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.forms import UserCreationForm
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.views.generic import ListView
+from django.urls import reverse
 
 from rest_framework import generics
 from . import models as feeds_models
@@ -30,9 +31,10 @@ def landing(request):
     """Default landing page if user is not logged in"""
     return render(request, 'main/landing.html')
 
-@login_required(redirect_field_name='login')
 def home(request):
     """Home page with all the user's feeds"""
+    if not request.user.is_authenticated:
+        return HttpResponseRedirect(reverse('landing'))
     sources = feeds_models.Source.objects.filter(owner=request.user)
     if request.GET.get("new_posts"):
         feeds_utils.update_feeds(len(sources))
@@ -53,7 +55,7 @@ def home(request):
         posts = paginator.page(paginator.num_pages)
     return render(request,'main/home.html',{"posts":posts,"filter":f, "last_checked":last_checked})
 
-@login_required(redirect_field_name='login')
+@login_required(redirect_field_name='landing')
 def get_feeds(request):
     """List view for the user's sources"""
 
