@@ -1,3 +1,4 @@
+# Full credit to django-feed-reader https://github.com/xurble/django-feed-reader
 from django.db import models
 from django.utils.timezone import utc
 from django.contrib.auth.models import User

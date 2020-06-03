@@ -15,6 +15,17 @@ from .filters import *
 
 import datetime
 
+def login_excluded(redirect_to):
+    """ This decorator kicks authenticated users out of a view 
+        https://stackoverflow.com/questions/55062157/how-to-prevent-user-to-access-login-page-in-django-when-already-logged-in""" 
+    def _method_wrapper(view_method):
+        def _arguments_wrapper(request, *args, **kwargs):
+            if request.user.is_authenticated:
+                return redirect(redirect_to) 
+            return view_method(request, *args, **kwargs)
+        return _arguments_wrapper
+    return _method_wrapper
+
 def landing(request):
     return render(request, 'main/landing.html')
 
@@ -85,6 +96,7 @@ def delete_feed(request, feed_id):
     feed.delete()
     return redirect('feeds')
 
+@login_excluded('home')
 def signup_view(request):
     form = UserCreationForm(request.POST or None)
     if form.is_valid():

@@ -3,11 +3,10 @@
 
 {% block content %}
     <div class="container">
-        <h1>Create new Account</h1>
         {% if form.errors %}
             {% for field in form %}
                 {% for error in field.errors %}
-                    <div class="alert alert-danger" id="field-errors">
+                    <div class="alert alert-danger mt-4" id="field-errors">
                         <strong>{{ error|escape }}</strong>
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
@@ -16,7 +15,7 @@
                 {% endfor %}
             {% endfor %}
             {% for error in form.non_field_errors %}
-                <div class="alert alert-danger" id="non-field-errors">
+                <div class="alert alert-danger mt-4" id="non-field-errors">
                     <strong>{{ error|escape }}</strong>
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -24,16 +23,36 @@
                 </div>
             {% endfor %}
         {% endif %}
-        <form action="{% url 'signup' %}" method="post">
-            {% csrf_token %}
-            {{form.username|as_crispy_field}} 
-            {{form.password1|as_crispy_field}} 
-            {{form.password2|as_crispy_field}}
-            <div class="container text-center">
-                <button type="submit" class="btn btn-primary">Sign Up</button>
-                <a href="{% url 'login' %}" class="btn btn-secondary">Login</a>
-            </div> 
-        </form>
+        <div class="row justify-content-center">
+            <aside class="col-sm-4">
+            <div class="card mt-5">
+                <article class="card-body">
+                    <a href="{% url 'login' %}" class="float-right btn btn-outline-primary">Log in</a>
+                    <h4 class="card-title mb-4 mt-1">Create an Account</h4>
+                    <form action="{% url 'signup' %}" method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            {{form.username|as_crispy_field}} 
+                        </div> 
+                        <div class="form-group">
+                            {{form.password1|as_crispy_field}} 
+                        </div>  
+                        <div class="form-group">
+                            {{form.password2|as_crispy_field}} 
+                        </div>  
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-block"> Login  </button>
+                        </div>                                                            
+                    </form>
+                </article>
+            </div>
+        </div>
     </div>
+
+    <style>
+        #hint_id_password1, #hint_id_password2,#hint_id_username{
+            display: none;
+        }
+    </style>
 
 {% endblock content %}

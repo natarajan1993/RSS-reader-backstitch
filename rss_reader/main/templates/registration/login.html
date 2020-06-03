@@ -3,7 +3,6 @@
 
 {% block content %}
     <div class="container">
-        <h1>Login</h1>
         {% if form.errors %}
             {% for field in form %}
                 {% for error in field.errors %}
@@ -18,15 +17,34 @@
                 </div>
             {% endfor %}
         {% endif %}
-            <form action="{% url 'login' %}" method="post">
-                {% csrf_token %}
-                {{form.username|as_crispy_field}} 
-                {{form.password|as_crispy_field}} 
-                <div class="container text-center">
-                    <button type="submit" class="btn btn-primary">Login</button>
-                    <a href="{% url 'signup' %}" class="btn btn-secondary">Sign Up</a>
-                </div>
-            </form>
+        <div class="row justify-content-center">
+            <aside class="col-sm-4">
+            <div class="card mt-5">
+                <article class="card-body">
+                    <a href="{% url 'signup' %}" class="float-right btn btn-outline-primary">Sign up</a>
+                    <h4 class="card-title mb-4 mt-1">Sign in</h4>
+                    <form action="{% url 'login' %}" method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            {{form.username|as_crispy_field}} 
+                        </div> <!-- form-group// -->
+                        <div class="form-group">
+                            {{form.password|as_crispy_field}} 
+                        </div> <!-- form-group// --> 
+                    
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-block"> Login  </button>
+                        </div> <!-- form-group// -->                                                           
+                    </form>
+                </article>
+            </div> <!-- card.// -->
         </div>
     </div>
+    <style>
+        .card {
+        margin: 0 auto; /* Added */
+        float: none; /* Added */
+        margin-bottom: 10px; /* Added */
+    }
+    </style>
 {% endblock content %}

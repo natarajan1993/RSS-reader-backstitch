@@ -12,7 +12,7 @@ urlpatterns = [
     path('update/<int:feed_id>', views.update_feed, name='update_feed'),
     path('delete/<int:feed_id>', views.delete_feed, name='delete_feed'),
 
-    path('accounts/login/', auth_views.LoginView.as_view(),{'template_name':'login.html'}, name='login'),
+    path('accounts/login/', auth_views.LoginView.as_view(redirect_authenticated_user=True),{'template_name':'login.html'}, name='login'),
     path('accounts/logout/', auth_views.LogoutView.as_view(),{'next_page':'home'}, name='logout'),
     path('accounts/signup/', views.signup_view, name="signup"),
 
