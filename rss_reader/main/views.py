@@ -107,7 +107,7 @@ def delete_feed(request, feed_id):
 @login_excluded('home')
 def signup_view(request):
     """Signup view"""
-    form = UserCreationForm(request.POST or None)
+    form = SignUpForm(request.POST or None)
     if form.is_valid():
         form.save()
         username = form.cleaned_data.get('username')
