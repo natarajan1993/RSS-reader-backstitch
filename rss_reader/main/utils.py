@@ -10,7 +10,9 @@
     - 200 codes are good -> The headers are set from the request headers and the body and url is sent to the parser delegator
 3. Parser delegator is import_feed() which checks if the feed is XML or JSON and uses the appropriate parsing function
     - Adds an index to the post and returns the status which is logged in read_feed()
-4. """
+4. parse_feed_xml() or parse_feed_json() takes in the source instance, the feed body content and the output instance. Sets the source title, description, image for the source
+    - Sets the title, url, description and guid
+    - Checks if the guid already exists. Saves the post if it does not exist"""
 from django.db.models import Q
 
 from django.utils import timezone
@@ -353,7 +355,7 @@ def read_feed(source_feed, output=NullOutput()):
         else: #not OK
             source_feed.interval += 120
     
-    # Clamp the update interval to not less than an hour or more than 24 hours
+    # Clamp the next update interval to not less than an hour or more than 24 hours
     if source_feed.interval < 60:
         source_feed.interval = 60 # no less than 1 hour
     if source_feed.interval > (60 * 24):
@@ -361,7 +363,7 @@ def read_feed(source_feed, output=NullOutput()):
     
     output.write("\nUpdating source_feed.interval from %d to %d\n" % (old_interval, source_feed.interval))
     td = datetime.timedelta(minutes=source_feed.interval)
-    source_feed.due_poll = timezone.now() + td
+    source_feed.due_poll = timezone.now() + td # Update to when the next time the feed needs to be updated
     source_feed.save()
         
 
@@ -379,7 +381,7 @@ def import_feed(source_feed, feed_body, content_type, output=NullOutput()):
         ok = False
         source_feed.last_result = "Unknown Feed Type: " + content_type
 
-    if ok and changed:
+    if ok and changed: #Update when the source was last changed if it was successfully updated
         source_feed.last_result = " OK (updated)" #and temporary redirects
         source_feed.last_change = timezone.now()
         
@@ -407,7 +409,7 @@ def parse_feed_xml(source_feed, feed_content, output):
         
         _customize_sanitizer(parser)
         f = parser.parse(feed_content) #Using python's feedparser module
-        entries = f['entries']
+        entries = f['entries'] # Get all the entries in the XML body
         if len(entries):
             source_feed.last_success = timezone.now() #in case we start auto unsubscribing long dead feeds
         else:
@@ -558,7 +560,7 @@ def parse_feed_json(source_feed, feed_content, output):
 
     try:
         f = json.loads(feed_content)
-        entries = f['items']
+        entries = f['items'] # Get all the items in the body
         if len(entries):
             source_feed.last_success = timezone.now() #in case we start auto unsubscribing long dead feeds
         else:

@@ -71,15 +71,18 @@ class Post(models.Model):
 
     # an entry in a feed
     
+    #The related_name attribute specifies the name of the reverse relation from the User model back to your model.
+    # If you don't specify a related_name, Django automatically creates one using the name of your model with the suffix _set, for instance User.posts_set.all().
+    # If you do specify, e.g. related_name=postss on the User model, User.posts_set will still work, but the User.posts is cleaner
     source        = models.ForeignKey(Source, on_delete=models.CASCADE, related_name='posts')
     title         = models.TextField(blank=True)
     body          = models.TextField()
     link          = models.CharField(max_length=512, blank=True, null=True)
-    found         = models.DateTimeField(auto_now_add=True)
-    created       = models.DateTimeField(db_index=True)
+    found         = models.DateTimeField(auto_now_add=True) # When the post was made as mentioned from the feed
+    created       = models.DateTimeField(db_index=True) # Index these columns in the db so we can speed up the searching
     guid          = models.CharField(max_length=255, blank=True, null=True, db_index=True) # The unique ID for each post we use to check for repeats. Either the feed has it, or use the link, or use a md5 hash
     author        = models.CharField(max_length=255, blank=True, null=True)
-    index         = models.IntegerField(db_index=True)
+    index         = models.IntegerField(db_index=True) # Index these columns in the db so we can speed up the searching
     image_url     = models.CharField(max_length=255,blank=True,null=True)
 
     def save(self, *args, **kwargs):
@@ -87,7 +90,7 @@ class Post(models.Model):
         if len(soup.get_text()) <= 1:
             self.body = ""
         else:
-            self.body = soup.get_text()[:300] + "..."
+            self.body = soup.get_text()[:300] + "..." # Truncate long descriptions
 
         images = soup.find_all('img') # Get all image tags in body s
 
