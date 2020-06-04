@@ -32,7 +32,7 @@ class NullOutput(object):
 
 
 def _customize_sanitizer(fp):
-
+    # Remove all weird attributes from the feed
 
     bad_attributes = [
         "align",
@@ -45,18 +45,18 @@ def _customize_sanitizer(fp):
     
     for item in bad_attributes:
         try:
-            if item in fp._HTMLSanitizer.acceptable_attributes:
+            if item in fp._HTMLSanitizer.acceptable_attributes: # _HTMLSanitizer is from the feedparser module
                 fp._HTMLSanitizer.acceptable_attributes.remove(item)
         except Exception:
             logging.debug("Could not remove {}".format(item))
             
 
 def get_agent(source_feed):
-
+    # Get a random user agent from our list if the feed is protected by cloudflare
     if source_feed.is_cloudflare:
         agent = random_user_agent()
         logging.error("using agent: {}".format(agent))
-    else:
+    else: # If it's not cloudflare just generate a default user agent
         agent = "{user_agent} (+{server}; Updater; {subs} subscribers)".format(user_agent=settings.FEEDS_USER_AGENT, server=settings.FEEDS_SERVER, subs=source_feed.num_subs)
 
     return agent
@@ -79,6 +79,7 @@ def random_user_agent():
 
 
 def fix_relative(html, url):
+    # Function that takes a relative path and converts it into a http address
     try:
         base = "/".join(url.split("/")[:3])
 
@@ -95,10 +96,13 @@ def fix_relative(html, url):
     return html
         
 
-def update_feeds(max_feeds=3, output=NullOutput()):
-
-
-    todo = Source.objects.filter(Q(due_poll__lt = timezone.now()) & Q(live = True))
+def update_feeds(sources=None, max_feeds=3, output=NullOutput()):
+    # Function that goes through each source for the user and checks for updates
+    # Added functionality to only update the user's feeds when the button is pressed
+    if sources is None: # Redundant check if the view did not pass in any user specific sources, then check all of them
+        todo = Source.objects.filter(Q(due_poll__lt = timezone.now()) & Q(live = True))
+    else:
+        todo = sources
 
     
     output.write("Queue size is {}".format(todo.count()))
@@ -117,7 +121,8 @@ def update_feeds(max_feeds=3, output=NullOutput()):
     
     
 def read_feed(source_feed, output=NullOutput()):
-
+    # Function that goes through each and every source for the user and navigates the redirects and updates model
+    # Calls appropriate xml or json parser for each feed
     old_interval = source_feed.interval
 
 
@@ -157,8 +162,9 @@ def read_feed(source_feed, output=NullOutput()):
     
     ret = None
     try:
+        # Just getting the status response from the feed
         ret = requests.get(source_feed.feed_url, headers=headers, allow_redirects=False, timeout=20, proxies=proxies)
-        source_feed.status_code = ret.status_code
+        source_feed.status_code = ret.status_code # This is the HTTP status code
         source_feed.last_result = "Unhandled Case"
         output.write(str(ret))
     except Exception as ex:
@@ -167,7 +173,7 @@ def read_feed(source_feed, output=NullOutput()):
         source_feed.status_code = 0
         output.write("\nFetch error: " + str(ex))
 
-
+        # If there is an error try a different proxy for next check check
         if proxy:
             source_feed.lastResult = "Proxy failed. Next retry will use new proxy"
             source_feed.status_code = 1  # this will stop us increasing the interval
@@ -177,25 +183,25 @@ def read_feed(source_feed, output=NullOutput()):
             source_feed.interval /= 2
 
 
-        
-    if ret is None and source_feed.status_code == 1:
+    """Handle all the redirect issues and set the fields in the model"""
+    if ret is None and source_feed.status_code == 1: # Edge case
         pass
-    elif ret == None or source_feed.status_code == 0:
-        source_feed.interval += 120
+    elif ret == None or source_feed.status_code == 0: # Retry case
+        source_feed.interval += 120 # Increase retry time
     elif ret.status_code < 200 or ret.status_code >= 500:
         #errors, impossible return codes
-        source_feed.interval += 120
+        source_feed.interval += 120 # Increase retry time
         source_feed.last_result = "Server error fetching feed (%d)" % ret.status_code
     elif ret.status_code == 404:
         #not found
-        source_feed.interval += 120
+        source_feed.interval += 120 # Increase retry time
         source_feed.last_result = "The feed could not be found"
     elif ret.status_code == 403 or ret.status_code == 410: #Forbidden or gone
 
         if "Cloudflare" in ret.text or ("Server" in ret.headers and "cloudflare" in ret.headers["Server"]):
 
             if source_feed.is_cloudflare and proxy is not None:
-                # we are already proxied - this proxy on cloudflare's shit list too?
+                # Feed is blocked by cloudflare
                 proxy.delete()
                 output.write("\Proxy seemed to also be blocked, burning")
                 source_feed.interval /= 2
@@ -209,7 +215,7 @@ def read_feed(source_feed, output=NullOutput()):
             
 
     elif ret.status_code >= 400 and ret.status_code < 500:
-        #treat as bad request
+        #treat as bad request. Turn off the feed
         source_feed.live = False
         source_feed.last_result = "Bad request (%d)" % ret.status_code
     elif ret.status_code == 304:
@@ -219,6 +225,7 @@ def read_feed(source_feed, output=NullOutput()):
         source_feed.last_success = timezone.now()
         
         if source_feed.last_success and (timezone.now() - source_feed.last_success).days > 7:
+            # If it's been more than 7 days since any change, reset the last modified
             source_feed.last_result = "Clearing etag/last modified due to lack of changes"
             source_feed.etag = None
             source_feed.last_modified = None
@@ -226,9 +233,9 @@ def read_feed(source_feed, output=NullOutput()):
         
     
     elif ret.status_code == 301 or ret.status_code == 308: #permenant redirect
-        new_url = ""
+        new_url = "" # Redirect url
         try:
-            if "Location" in ret.headers:
+            if "Location" in ret.headers: # Get redirect url from headers
                 new_url = ret.headers["Location"]
             
                 if new_url[0] == "/":
@@ -292,13 +299,13 @@ def read_feed(source_feed, output=NullOutput()):
             source_feed.interval += 60
     
     #NOT ELIF, WE HAVE TO START THE IF AGAIN TO COPE WTIH 302
-    if ret and ret.status_code >= 200 and ret.status_code < 300: #now we are not following redirects 302,303 and so forth are going to fail here, but what the hell :)
+    if ret and ret.status_code >= 200 and ret.status_code < 300: # All the 200 status codes cases
 
-        # great!
+        # 200 is OK so setting the OK flag as True
         ok = True
         changed = False 
         
-        
+        # If we came here from a redirect, get a new etag and remove the last modified time
         if was302:
             source_feed.etag = None
             source_feed.last_modified = None
@@ -319,6 +326,7 @@ def read_feed(source_feed, output=NullOutput()):
         if "Content-Type" in ret.headers:
             content_type = ret.headers["Content-Type"]
 
+        #----------------Finally send the call to parse the feed after handling and setting all redirects-------------------
         (ok,changed) = import_feed(source_feed=source_feed, feed_body=ret.content, content_type=content_type, output=output)
         
         if ok and changed:
@@ -344,7 +352,7 @@ def read_feed(source_feed, output=NullOutput()):
         
 
 def import_feed(source_feed, feed_body, content_type, output=NullOutput()):
-
+    # Determine whethere the feed is xml or json and parse that accordingly
 
     ok = False
     changed = False
@@ -376,7 +384,7 @@ def import_feed(source_feed, feed_body, content_type, output=NullOutput()):
 
     
 def parse_feed_xml(source_feed, feed_content, output):
-
+    # Parse the feed if it's a XML feed
     ok = True
     changed = False 
 
@@ -384,7 +392,7 @@ def parse_feed_xml(source_feed, feed_content, output):
     try:
         
         _customize_sanitizer(parser)
-        f = parser.parse(feed_content) #need to start checking feed parser errors here
+        f = parser.parse(feed_content) #need to start checking feed parser errors here. Using python's feedparser module
         entries = f['entries']
         if len(entries):
             source_feed.last_success = timezone.now() #in case we start auto unsubscribing long dead feeds
@@ -399,18 +407,18 @@ def parse_feed_xml(source_feed, feed_content, output):
     
     if ok:
         try:
-            source_feed.name = f.feed.title
+            source_feed.name = f.feed.title # Get the name of the source
         except Exception as ex:
             pass
 
         try:
-            source_feed.site_url = f.feed.link
+            source_feed.site_url = f.feed.link # Get the url of the source
         except Exception as ex:
             pass
     
 
         try:
-            source_feed.image_url = f.feed.image.href
+            source_feed.image_url = f.feed.image.href # Get any images
         except:
             pass
 
@@ -418,7 +426,7 @@ def parse_feed_xml(source_feed, feed_content, output):
         # either of these is fine, prefer description over summary
         # also feedparser will give us itunes:summary etc if there
         try:
-            source_feed.description = f.feed.summary
+            source_feed.description = f.feed.summary # Get any description or summary tags
         except:
             pass
 
@@ -434,7 +442,7 @@ def parse_feed_xml(source_feed, feed_content, output):
         for e in entries:
         
 
-            # we are going to take the longest
+            # we are going to take the longest attrib between the content, summary, summary_detail and description tags
             body = ""
             
             if hasattr(e, "content"):
@@ -458,68 +466,70 @@ def parse_feed_xml(source_feed, feed_content, output):
             body = fix_relative(body, source_feed.site_url)
             
             try:
-                guid = e.guid
+                guid = e.guid # Set the guid that we are using as the unique id to check for repeats
             except Exception as ex:
-                try:
+                try: # If it doesn't have a guid, set the url as the guid
                     guid = e.link
-                except Exception as ex:
+                except Exception as ex: # If there's no link, create a random ID and set that as the guid
                     m = hashlib.md5()
                     m.update(body.encode("utf-8"))
                     guid = m.hexdigest()
                     
             try:
-                p  = Post.objects.filter(source=source_feed).filter(guid=guid)[0]
+                # TODO: Reduce number of database accessess. Get all posts for source as array and check with that
+                p  = Post.objects.filter(source=source_feed).filter(guid=guid)[0] # Check if the post has already been recovered
                 output.write("EXISTING " + guid + "\n")
 
             except Exception as ex:
                 output.write("NEW " + guid + "\n")
                 p = Post(index=0, body=" ")
-                p.found = timezone.now()
+                p.found = timezone.now() # Set when the post was created. Could probably replace with auto_now_add in the model
                 changed = True
-                p.source = source_feed
+                p.source = source_feed # Set the source of the post as the source we are currently parsing
     
             try:
-                title = e.title
+                title = e.title  # Set the title and the url for the post
             except Exception as ex:
                 title = ""
                         
             try:
-                p.link = e.link
+                p.link = e.link # Set the title and the url for the post
             except Exception as ex:
                 p.link = ''
             p.title = title
 
             try:
-                p.image_url = e.image.href
+                p.image_url = e.image.href # Set any images for the post. Overriding in the model's save() method to parse image tags in the body
             except:
                 pass
 
 
             try:
+                # When the post was created. Could also replace with auto_now_add
                 p.created  = datetime.datetime.fromtimestamp(time.mktime(e.published_parsed)).replace(tzinfo=timezone.utc)
 
             except Exception as ex:
                 output.write("CREATED ERROR")     
                 p.created  = timezone.now()
         
-            p.guid = guid
+            p.guid = guid # Set the guid of the post
             try:
-                p.author = e.author
+                p.author = e.author # Set the author of the post
             except Exception as ex:
                 p.author = ""
 
 
             try:
-                p.save()
-                # output.write(p.body)
+                p.save() # Finally save the post
             except Exception as ex:
-                # import pdb; pdb.set_trace()
                 output.write(str(ex))
 
 
             try:
+                # Parse all the enclosures. Could probably remove. Executive decision
                 seen_files = []
                 for ee in list(p.enclosures.all()):
+                    # Double loop. Definitely needs some optimization. Ok for now since we aren't encountering enclosures
                     # check existing enclosure is still there
                     found_enclosure = False
                     for pe in e["enclosures"]:
@@ -570,7 +580,7 @@ def parse_feed_xml(source_feed, feed_content, output):
 
             try:
                 p.body = body                          
-                p.save()
+                p.save() # Finally save the post
                 # output.write(p.body)
             except Exception as ex:
                 output.write(str(ex))
@@ -581,7 +591,7 @@ def parse_feed_xml(source_feed, feed_content, output):
     
     
 def parse_feed_json(source_feed, feed_content, output):
-
+    # Exactly the same as parsing xml but we are using the python json parser to load the feed
     ok = True
     changed = False 
 
@@ -605,9 +615,7 @@ def parse_feed_json(source_feed, feed_content, output):
     
     
         if "expired" in f and f["expired"]:
-            # This feed says it is done
-            # TODO: permanently disable
-            # for now source_feed.interval to max
+            # This feed says it is done for now. source_feed.interval to max
             source_feed.interval = (24*3*60)
             source_feed.last_result = "This feed has expired"
             return (False, False, source_feed.interval)
@@ -770,7 +778,7 @@ def parse_feed_json(source_feed, feed_content, output):
     
     
 def test_feed(source, cache=False, output=NullOutput()):
-
+    # Looks like a redundant function that I could probably remove
 
     headers = { "User-Agent": get_agent(source)  } #identify ourselves and also stop our requests getting picked up by any cache
 
@@ -811,7 +819,7 @@ def get_proxy(out=NullOutput()):
     
 
 def find_proxies(out=NullOutput()):
-    
+    # Function that switches our pro
     
     out.write("\nLooking for proxies\n")
     

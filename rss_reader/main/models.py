@@ -15,30 +15,33 @@ from bs4 import BeautifulSoup
 
 class Source(models.Model):
     # This is an actual feed that we poll
-    name          = models.CharField(max_length=255, blank=True, null=True)
-    site_url      = models.CharField(max_length=255, blank=True, null=True)
-    feed_url      = models.CharField(max_length=255)
-    image_url     = models.CharField(max_length=255, blank=True, null=True)
+    name          = models.CharField(max_length=255, blank=True, null=True) # Name of the source
+    site_url      = models.CharField(max_length=255, blank=True, null=True) # URL for the parent site of source
+    feed_url      = models.CharField(max_length=255) # Actual url of the RSS feed
+    image_url     = models.CharField(max_length=255, blank=True, null=True) # Any associated images with the feed
     
-    description   = models.TextField(null=True, blank=True)
+    description   = models.TextField(null=True, blank=True) # Description for the source
 
-    last_polled   = models.DateTimeField(max_length=255, blank=True, null=True)
-    due_poll      = models.DateTimeField(default=datetime.datetime(1900, 1, 1)) # default to distant past to put new sources to front of queue
+    last_polled   = models.DateTimeField(max_length=255, blank=True, null=True) # Datetime the source was last polled
+    due_poll      = models.DateTimeField(default=datetime.datetime(1900, 1, 1)) # Time to poll the source next. Changed in utils.py. default to distant past to put new sources to front of queue
+
+    #The basic concept is that a feed publisher may provide a special HTTP header, called an ETag, when it publishes a feed. You should send this ETag back to the server on subsequent requests. If the feed has not changed since the last time you requested it, the server will return a special HTTP status code (304) and no feed data.
     etag          = models.CharField(max_length=255, blank=True, null=True)
+
     last_modified = models.CharField(max_length=255, blank=True, null=True) # just pass this back and forward between server and me , no need to parse
     
-    last_result    = models.CharField(max_length=255,blank=True,null=True)
-    interval       = models.PositiveIntegerField(default=400)
-    last_success   = models.DateTimeField(null=True)
-    last_change    = models.DateTimeField(null=True)
-    live           = models.BooleanField(default=True)
-    status_code    = models.PositiveIntegerField(default=0)
-    last_302_url   = models.CharField(max_length=255, null=True, blank=True)
-    last_302_start = models.DateTimeField(null=True, blank=True)
+    last_result    = models.CharField(max_length=255,blank=True,null=True) # Result of last poll. Set in utils.py
+    interval       = models.PositiveIntegerField(default=400) # Interval between polls
+    last_success   = models.DateTimeField(null=True) # Datetime of last successful poll
+    last_change    = models.DateTimeField(null=True) # Datetime of last change in the feed
+    live           = models.BooleanField(default=True) # Boolean if the feed is live or not. Set in utils.py
+    status_code    = models.PositiveIntegerField(default=0) # HTTP status code
+    last_302_url   = models.CharField(max_length=255, null=True, blank=True) # Last redirect url
+    last_302_start = models.DateTimeField(null=True, blank=True) # Time we got redirected last time. Used to set temporary or permanent redirects
     
     max_index     = models.IntegerField(default=0)
     
-    num_subs      = models.IntegerField(default=1)
+    num_subs      = models.IntegerField(default=1) # Only use is to set the user agent for non-cloudflare links
     
     is_cloudflare  = models.BooleanField(default=False)
 
@@ -50,7 +53,7 @@ class Source(models.Model):
     
     @property
     def best_link(self):
-        #the html link else hte feed link
+        #the html link else the feed link
         if self.site_url is None or self.site_url == '':
             return self.feed_url
         else:
@@ -120,7 +123,7 @@ class Post(models.Model):
     link          = models.CharField(max_length=512, blank=True, null=True)
     found         = models.DateTimeField(auto_now_add=True)
     created       = models.DateTimeField(db_index=True)
-    guid          = models.CharField(max_length=255, blank=True, null=True, db_index=True)
+    guid          = models.CharField(max_length=255, blank=True, null=True, db_index=True) # The unique ID for each post we use to check for repeats. Either the feed has it, or use the link, or use a md5 hash
     author        = models.CharField(max_length=255, blank=True, null=True)
     index         = models.IntegerField(db_index=True)
     image_url     = models.CharField(max_length=255,blank=True,null=True)
@@ -154,7 +157,7 @@ class Post(models.Model):
         ordering = ["index"]
         
 class Enclosure(models.Model):
-
+    # Enclosure is audio file urls which are basically podcasts
     post   = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='enclosures')
     length = models.IntegerField(default=0)
     href   = models.CharField(max_length=512)

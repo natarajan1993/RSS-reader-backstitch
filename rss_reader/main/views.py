@@ -35,8 +35,9 @@ def home(request):
     if not request.user.is_authenticated:
         return HttpResponseRedirect(reverse('landing'))
     sources = feeds_models.Source.objects.filter(owner=request.user)
+    print(sources.filter(name="xkcd.com"))
     if request.GET.get("new_posts"):
-        feeds_utils.update_feeds(len(sources))
+        feeds_utils.update_feeds(sources=sources, max_feeds=len(sources))
         last_checked = feeds_models.LastChecked(checked_time=datetime.datetime.now(), owner=request.user)
         last_checked.save()
     last_checked = feeds_models.LastChecked.objects.last()
