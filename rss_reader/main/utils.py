@@ -1,9 +1,21 @@
 # Full credit to django-feed-reader https://github.com/xurble/django-feed-reader
+"""
+1. Take the list of sources from the view and send it to read_feed()
+2. read_feed() will use Python's requests() to read the feed url
+    - Navigate all the redirects and set the redirect specific fields in the model
+    - If feed is protected by cloudflare, proxies are activated
+        - Each proxy is tried on each retry until we burn through all of them
+    - 400 and 500 errors are simply logged and ignored
+    - 300 redirect errors are checked for temporary or permanent redirects and then the url of the source is modified with the redirect url
+    - 200 codes are good -> The headers are set from the request headers and the body and url is sent to the parser delegator
+3. Parser delegator is import_feed() which checks if the feed is XML or JSON and uses the appropriate parsing function
+    - Adds an index to the post and returns the status which is logged in read_feed()
+4. """
 from django.db.models import Q
 
 from django.utils import timezone
 
-from .models import Source, Enclosure, Post, WebProxy
+from .models import Source, Post, WebProxy
 
 import feedparser as parser
 
@@ -79,7 +91,7 @@ def random_user_agent():
 
 
 def fix_relative(html, url):
-    # Function that takes a relative path and converts it into a http address
+    # Helper function that takes a relative path and converts it into a http address
     try:
         base = "/".join(url.split("/")[:3])
 
@@ -107,7 +119,7 @@ def update_feeds(sources=None, max_feeds=3, output=NullOutput()):
     
     output.write("Queue size is {}".format(todo.count()))
 
-    sources = todo.order_by("due_poll")[:max_feeds]
+    sources = todo.order_by("due_poll")[:max_feeds] # Clamps the max updated feeds at once to only 3 but we changed it to all feeds in models.py
 
     output.write("\nProcessing %d\n\n" % sources.count())
 
@@ -140,6 +152,7 @@ def read_feed(source_feed, output=NullOutput()):
     proxies = {}
     proxy = None
     if source_feed.is_cloudflare :
+        # If it's a cloudflare link, then change the proxy to a new one
         try:
             proxy = get_proxy(output)
             
@@ -339,7 +352,8 @@ def read_feed(source_feed, output=NullOutput()):
             source_feed.interval += 20 # we slow down feeds a little more that don't send headers we can use
         else: #not OK
             source_feed.interval += 120
-            
+    
+    # Clamp the update interval to not less than an hour or more than 24 hours
     if source_feed.interval < 60:
         source_feed.interval = 60 # no less than 1 hour
     if source_feed.interval > (60 * 24):
@@ -384,7 +398,7 @@ def import_feed(source_feed, feed_body, content_type, output=NullOutput()):
 
     
 def parse_feed_xml(source_feed, feed_content, output):
-    # Parse the feed if it's a XML feed
+    # Parse the feed if it's a XML feed. Also changes the source title, url, description and image if it's present in the body of the feed
     ok = True
     changed = False 
 
@@ -392,7 +406,7 @@ def parse_feed_xml(source_feed, feed_content, output):
     try:
         
         _customize_sanitizer(parser)
-        f = parser.parse(feed_content) #need to start checking feed parser errors here. Using python's feedparser module
+        f = parser.parse(feed_content) #Using python's feedparser module
         entries = f['entries']
         if len(entries):
             source_feed.last_success = timezone.now() #in case we start auto unsubscribing long dead feeds
@@ -523,59 +537,6 @@ def parse_feed_xml(source_feed, feed_content, output):
                 p.save() # Finally save the post
             except Exception as ex:
                 output.write(str(ex))
-
-
-            try:
-                # Parse all the enclosures. Could probably remove. Executive decision
-                seen_files = []
-                for ee in list(p.enclosures.all()):
-                    # Double loop. Definitely needs some optimization. Ok for now since we aren't encountering enclosures
-                    # check existing enclosure is still there
-                    found_enclosure = False
-                    for pe in e["enclosures"]:
-                    
-                        if pe["href"] == ee.href and ee.href not in seen_files:
-                            found_enclosure = True
-                        
-                            try:
-                                ee.length = int(pe["length"])
-                            except:
-                                ee.length = 0
-
-                            try:
-                                type = pe["type"]
-                            except:
-                                type = "audio/mpeg"  # we are assuming podcasts here but that's probably not safe
-
-                            ee.type = type
-                            ee.save()
-                            break
-                    if not found_enclosure:
-                        ee.delete()
-                    seen_files.append(ee.href)
-    
-                for pe in e["enclosures"]:
-                    try:
-                        if pe["href"] not in seen_files:
-                    
-                            try:
-                                length = int(pe["length"])
-                            except:
-                                length = 0
-                            
-                            try:
-                                type = pe["type"]
-                            except:
-                                type = "audio/mpeg"
-                    
-                            ee = Enclosure(post=p , href=pe["href"], length=length, type=type)
-                            ee.save()
-                    except Exception as ex:
-                        pass
-            except Exception as ex:
-                if output:
-                    output.write("No enclosures - " + str(ex))
-
 
 
             try:
@@ -713,59 +674,6 @@ def parse_feed_json(source_feed, feed_content, output):
                 
             p.save()
             
-
-            try:
-                seen_files = []
-                for ee in list(p.enclosures.all()):
-                    # check existing enclosure is still there
-                    found_enclosure = False
-                    if "attachments" in e:
-                        for pe in e["attachments"]:
-                    
-                            if pe["url"] == ee.href and ee.href not in seen_files:
-                                found_enclosure = True
-                        
-                                try:
-                                    ee.length = int(pe["size_in_bytes"])
-                                except:
-                                    ee.length = 0
-
-                                try:
-                                    type = pe["mime_type"]
-                                except:
-                                    type = "audio/mpeg"  # we are assuming podcasts here but that's probably not safe
-
-                                ee.type = type
-                                ee.save()
-                                break
-                    if not found_enclosure:
-                        ee.delete()
-                    seen_files.append(ee.href)
-
-                if "attachments" in e:
-                    for pe in e["attachments"]:
-
-                        try:
-                            if pe["url"] not in seen_files:
-                    
-                                try:
-                                    length = int(pe["size_in_bytes"])
-                                except:
-                                    length = 0
-                            
-                                try:
-                                    type = pe["mime_type"]
-                                except:
-                                    type = "audio/mpeg"
-                    
-                                ee = Enclosure(post=p , href=pe["url"], length=length, type=type)
-                                ee.save()
-                        except Exception as ex:
-                            pass
-            except Exception as ex:
-                if output:
-                    output.write("No enclosures - " + str(ex))
-
             try:
                 p.body = body                       
                 p.save()
@@ -776,36 +684,9 @@ def parse_feed_json(source_feed, feed_content, output):
 
     return (ok,changed)
     
-    
-def test_feed(source, cache=False, output=NullOutput()):
-    # Looks like a redundant function that I could probably remove
 
-    headers = { "User-Agent": get_agent(source)  } #identify ourselves and also stop our requests getting picked up by any cache
-
-    if cache:
-        if source.etag:
-            headers["If-None-Match"] = str(source.etag)
-        if source.last_modified:
-            headers["If-Modified-Since"] = str(source.last_modified)
-    else:
-        headers["Cache-Control"] = "no-cache,max-age=0" 
-        headers["Pragma"] = "no-cache"
-
-    output.write("\n" + str(headers))
-
-    ret = requests.get(source.feed_url, headers=headers, allow_redirects=False, verify=False, timeout=20)
-
-    output.write("\n\n")
-    
-    output.write(str(ret))
-    
-    output.write("\n\n")
-    
-    output.write(ret.text)
-    
-    
 def get_proxy(out=NullOutput()):
-
+    # Function that returns the latest proxy from the list of proxies
     p = WebProxy.objects.first()
     
     if p is None:
@@ -819,7 +700,7 @@ def get_proxy(out=NullOutput()):
     
 
 def find_proxies(out=NullOutput()):
-    # Function that switches our pro
+    # Function that creates a new proxy from the list of proxies to prevent cloudflare blocking
     
     out.write("\nLooking for proxies\n")
     

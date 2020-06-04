@@ -4,6 +4,5 @@ from .models import *
 
 admin.site.register(Source)
 admin.site.register(Post)
-admin.site.register(Enclosure)
 admin.site.register(WebProxy)
 admin.site.register(LastChecked)

@@ -66,52 +66,6 @@ class Source(models.Model):
         else:
             return self.name
     
-    @property
-    def garden_style(self):
-        
-        if not self.live:
-            css = "background-color:#ccc;"
-        elif self.last_change == None or self.last_success == None:
-            css = "background-color:#D00;color:white"
-        else:
-            dd = datetime.datetime.utcnow().replace(tzinfo=utc) - self.last_change
-            
-            days = int (dd.days / 2)
-            
-            col = 255 - days
-            if col < 0: col = 0
-            
-            css = "background-color:#ff%02x%02x" % (col,col)
-
-            if col < 128:
-                css += ";color:white"
-            
-        return css
-        
-    @property
-    def health_box(self):
-        
-        if not self.live:
-            css="#ccc;"
-        elif self.last_change == None or self.last_success == None:
-            css="#F00;"
-        else:
-            dd = datetime.datetime.utcnow().replace(tzinfo=utc) - self.last_change
-            
-            days = int (dd.days/2)
-            
-            red = days
-            if red > 255:
-                red = 255
-            
-            green = 255-days;
-            if green < 0:
-                green = 0
-            
-            css = "#%02x%02x00" % (red,green)
-            
-        return css
-        
 
 class Post(models.Model):
 
@@ -155,14 +109,6 @@ class Post(models.Model):
 
     class Meta:
         ordering = ["index"]
-        
-class Enclosure(models.Model):
-    # Enclosure is audio file urls which are basically podcasts
-    post   = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='enclosures')
-    length = models.IntegerField(default=0)
-    href   = models.CharField(max_length=512)
-    type   = models.CharField(max_length=256) 
-        
         
 class WebProxy(models.Model):
     # this class if for Cloudflare avoidance and contains a list of potential
